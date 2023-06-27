@@ -16,13 +16,13 @@ public class Main {
     private static final int COUNT_WORDS = 10_000;
     private static final int LENGTH_WORD = 100_000;
     private static final int SIZE_BLOCKING_QUEUE = 100;
+    private static final CopyOnWriteArrayList<Map.Entry<String, Long>> list = new CopyOnWriteArrayList<>();
 
     public static void main(String[] args) throws InterruptedException, IOException {
         BlockingQueue<String> queue1 = new ArrayBlockingQueue<>(SIZE_BLOCKING_QUEUE);
         BlockingQueue<String> queue2 = new ArrayBlockingQueue<>(SIZE_BLOCKING_QUEUE);
         BlockingQueue<String> queue3 = new ArrayBlockingQueue<>(SIZE_BLOCKING_QUEUE);
 
-        CopyOnWriteArrayList<Map.Entry<String, Long>> list = new CopyOnWriteArrayList<>();
         list.add(new AbstractMap.SimpleEntry<>("", 1L));
         list.add(new AbstractMap.SimpleEntry<>("", 1L));
         list.add(new AbstractMap.SimpleEntry<>("", 1L));
@@ -44,12 +44,7 @@ public class Main {
             for (int i=0; i<COUNT_WORDS; i++) {
                 try {
                     String text = queue1.take();
-                    long countSymbol = text.chars()
-                            .filter(x -> x == 'a')
-                            .count();
-                    if(list.get(0).getValue() < countSymbol) {
-                        list.set(0, new AbstractMap.SimpleEntry<>(text, countSymbol));
-                    }
+                    isMaxCountSymbolText(text, 'a');
                 } catch (InterruptedException e) {
                     return;
                 }
@@ -60,12 +55,7 @@ public class Main {
             for (int i=0; i<COUNT_WORDS; i++) {
                 try {
                     String text = queue2.take();
-                    long countSymbol = text.chars()
-                            .filter(x -> x == 'b')
-                            .count();
-                    if(list.get(1).getValue() < countSymbol) {
-                        list.set(1, new AbstractMap.SimpleEntry<>(text, countSymbol));
-                    }
+                    isMaxCountSymbolText(text, 'b');
                 } catch (InterruptedException e) {
                     return;
                 }
@@ -76,12 +66,7 @@ public class Main {
             for (int i=0; i<COUNT_WORDS; i++) {
                 try {
                     String text = queue3.take();
-                    long countSymbol = text.chars()
-                            .filter(x -> x == 'c')
-                            .count();
-                    if(list.get(2).getValue() < countSymbol) {
-                        list.set(2, new AbstractMap.SimpleEntry<>(text, countSymbol));
-                    }
+                    isMaxCountSymbolText(text, 'c');
                 } catch (InterruptedException e) {
                     return;
                 }
@@ -118,5 +103,40 @@ public class Main {
             text.append(letters.charAt(random.nextInt(letters.length())));
         }
         return text.toString();
+    }
+
+    private static boolean isMaxCountSymbolText(String text, char symbol) {
+        long countSymbol = getCountSymbolText(text, symbol);
+        int indexSymbolList = getIndexSymbolsList(symbol);
+        return replaceEntryListIfMax(text,indexSymbolList, countSymbol);
+    }
+
+    private static long getCountSymbolText(String text, char symbol) {
+        return text.chars()
+                .filter(x -> x == symbol)
+                .count();
+    }
+
+    private static int getIndexSymbolsList(char symbol) {
+        switch (symbol) {
+            case 'a' -> {
+                return 0;
+            }
+            case 'b' -> {
+                return 1;
+            }
+            case 'c' -> {
+                return 2;
+            }
+            default -> throw new RuntimeException();
+        }
+    }
+
+    private static boolean replaceEntryListIfMax(String newText, int indexSymbolList, long countSymbol) {
+        if(list.get(indexSymbolList).getValue() < countSymbol) {
+            list.set(indexSymbolList, new AbstractMap.SimpleEntry<>(newText, countSymbol));
+            return true;
+        }
+        return false;
     }
 }
